@@ -57,24 +57,6 @@ def scrape_property_details(driver, url):
         print(f"Error occurred: {str(e)}")
         return None
 
-def check_and_handle_login(driver):
-    print("\nChecking if login is required...")
-    try:
-        # Navigate to the login page
-        driver.get('https://secure.sahibinden.com/giris')
-        
-        # Wait for user to manually log in
-        input("\nPlease log in manually in the browser window and press Enter once completed...")
-        
-        # Optional: Add a small delay after user confirmation
-        time.sleep(2)
-        
-        print("Continuing with scraping...")
-        return True
-        
-    except Exception as e:
-        print(f"Error during login check: {str(e)}")
-        return False
 
 def scrape_multiple_properties(urls):
     results = []
@@ -153,7 +135,7 @@ if __name__ == "__main__":
     urls = [
             "https://www.sahibinden.com/satilik-daire/istanbul-adalar?pagingSize=50",  
             "https://www.sahibinden.com/satilik-daire/istanbul-arnavutkoy?pagingSize=50",  
-            "https://www.sahibinden.com/satilik-daire/istanbul-atasehir?pagingSize=50",  
+            "https://www.sahibinden.com/satilik-daire/istanbul-atasehir?pagingSize=50",    
             "https://www.sahibinden.com/satilik-daire/istanbul-avcilar?pagingSize=50",  
             "https://www.sahibinden.com/satilik-daire/istanbul-bagcilar?pagingSize=50",  
             "https://www.sahibinden.com/satilik-daire/istanbul-bahcelievler?pagingSize=50",  
@@ -189,7 +171,7 @@ if __name__ == "__main__":
             "https://www.sahibinden.com/satilik-daire/istanbul-tuzla?pagingSize=50",  
             "https://www.sahibinden.com/satilik-daire/istanbul-umraniye?pagingSize=50",  
             "https://www.sahibinden.com/satilik-daire/istanbul-uskudar?pagingSize=50",  
-            "https://www.sahibinden.com/satilik-daire/istanbul-zeytinburnu?pagingSize=50",
+            "https://www.sahibinden.com/satilik-daire/istanbul-zeytinburnu?pagingSize=50", 
     ]
     # Scrape all properties
     results = scrape_multiple_properties(urls)
