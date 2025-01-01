@@ -6,42 +6,44 @@ from selenium.common.exceptions import TimeoutException
 import time
 import csv
 from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor
-import concurrent.futures
+
 
 def scrape_property_details(driver, url):
     try:
         print(f"\nNavigating to URL: {url}")
         driver.get(url)
         
-        # Extract Bölge from URL, removing any query parameters
+        # Extract district name from URL (e.g., 'adalar' from '.../istanbul-adalar')
         bolge = url.split('?')[0].split('/')[-1].split('-')[-1].capitalize()
         
-        # Wait for the search results to load
-        print("Waiting for results to load...")
+        # Set up wait time for dynamic content loading
         wait = WebDriverWait(driver, 10)
         
-        # Find all property rows
+        # Find all property listings on the page
         property_rows = wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, "searchResultsItem")))
         results = []
         
+        # Iterate through each property listing
         for row in property_rows:
             property_details = {}
             
             try:
-                # Add Bölge
-                property_details['Bölge'] = bolge
+                # Store property information in a dictionary
+                property_details['Bölge'] = bolge  # District
                 
-                # Extract other details as before
+                # Extract square meters (Gross)
                 brut = row.find_element(By.CSS_SELECTOR, "td.searchResultsAttributeValue").text.strip()
                 property_details['m² (Brüt)'] = brut
                 
+                # Extract number of rooms
                 oda = row.find_elements(By.CSS_SELECTOR, "td.searchResultsAttributeValue")[1].text.strip()
                 property_details['Oda Sayısı'] = oda
                 
+                # Extract price
                 fiyat = row.find_element(By.CSS_SELECTOR, "td.searchResultsPriceValue span").text.strip()
                 property_details['Fiyat'] = fiyat
                 
+                # Extract neighborhood
                 mahalle = row.find_element(By.CSS_SELECTOR, "td.searchResultsLocationValue").text.strip()
                 property_details['Mahalle'] = mahalle
                 
@@ -63,7 +65,7 @@ def scrape_multiple_properties(urls):
     driver = None
     
     try:
-        # Create single ChromeDriver instance
+        # Configure Chrome options for stable scraping
         options = uc.ChromeOptions()
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-gpu')
@@ -72,13 +74,13 @@ def scrape_multiple_properties(urls):
         
         driver = uc.Chrome(options=options)
         
-        # Process URLs directly without login
+        # Process each URL and collect results
         for url in urls:
             try:
                 result = scrape_property_details(driver, url)
                 if result:
-                    results.extend(result)  # Use extend instead of append since each result is a list
-                time.sleep(10)  # Add 10-second delay between URLs
+                    results.extend(result)  # Combine results from all pages
+                time.sleep(10)  # Delay between requests to avoid rate limiting
             except Exception as e:
                 print(f"Error processing {url}: {str(e)}")
                 continue
@@ -86,6 +88,7 @@ def scrape_multiple_properties(urls):
     except Exception as e:
         print(f"Error occurred: {str(e)}")
     finally:
+        # Ensure browser is properly closed even if errors occur
         if driver:
             try:
                 driver.close()
@@ -100,10 +103,11 @@ def save_to_csv(results):
         print("No results to save")
         return
         
+    # Create unique filename with timestamp
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"property_details_{timestamp}.csv"
     
-    # Update fieldnames to include Bölge
+    # Define CSV column headers
     fieldnames = [
         'Bölge',
         'm² (Brüt)',
@@ -112,6 +116,7 @@ def save_to_csv(results):
         'Mahalle'
     ]
     
+    # Write results to CSV file using semicolon delimiter (common in Turkish Excel)
     with open(filename, 'w', newline='', encoding='utf-8-sig') as csvfile:
         writer = csv.writer(csvfile, delimiter=';')
         writer.writerow(fieldnames)
